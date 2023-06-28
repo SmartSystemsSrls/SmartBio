@@ -1,5 +1,5 @@
 # do chmod +x setup.sh
-# and then ./script.sh
+# and then ./setup.sh
 
 sudo apt-get update -y
 sudo apt install python3-pip -y
