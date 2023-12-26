@@ -32,16 +32,27 @@ def get_json():
 @app.route('/json', methods=['POST'])
 def edit_json():
     new_data = request.get_json()
+    # json_data = load_json()
+    # json_data.update(new_data)
+    save_json(new_data)
+    return jsonify(new_data)
+
+@app.route('/add', methods=['POST'])
+def add_json():
+    new_data = request.get_json()
     json_data = load_json()
-    json_data.update(new_data)
+    json_data.append(new_data)
     save_json(json_data)
     return jsonify(json_data)
 
 @app.route('/status', methods=['GET'])
 def get_status():
     json_data = load_json()
-    status = check_config_status(json_data)
-    return jsonify({'status': status})
+    statuses = []
+    for data in json_data:
+        data['status'] =  check_config_status(data)
+        statuses.append(data)
+    return jsonify(statuses)
 
 import cv2
 def check_config_status(json_data):

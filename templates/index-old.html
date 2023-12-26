@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JSON Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .json-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f2f2f2;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+.status-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>CONFIG Editor</h1>
+    <div class="json-container">
+        <h2>Stored CONFIG</h2>
+        <pre>{{ json_data }}</pre>
+    </div>
+
+   <div class="status-container">
+        <h2>Config Status:</h2>
+        <span id="config-status" class="status"></span>
+    </div>
+
+
+
+    <form id="json-form">
+        <h2>Edit JSON</h2>
+
+        <!-- Loop through each object in the array -->
+        {% for obj in json_data %}
+            <div class="object-container">
+                <label for="send-url{{ loop.index }}">Send URL {{ loop.index }}:</label>
+                <input type="text" id="send-url{{ loop.index }}" name="send-url{{ loop.index }}" value="{{ obj.send_url }}"><br>
+
+                <label for="device-name{{ loop.index }}">Device Name {{ loop.index }}:</label>
+                <input type="text" id="device-name{{ loop.index }}" name="device-name{{ loop.index }}" value="{{ obj.device_name }}"><br>
+
+                <label for="rtsp-video{{ loop.index }}">RTSP Video {{ loop.index }}:</label>
+                <input type="text" id="rtsp-video{{ loop.index }}" name="rtsp-video{{ loop.index }}" value="{{ obj.rtsp_video }}"><br>
+            </div>
+        {% endfor %}
+
+        <!-- Add an empty object for adding new entries -->
+        <div class="object-container">
+            <label for="send-url-new">Send URL:</label>
+            <input type="text" id="send-url-new" name="send-url-new" value=""><br>
+
+            <label for="device-name-new">Device Name:</label>
+            <input type="text" id="device-name-new" name="device-name-new" value=""><br>
+
+            <label for="rtsp-video-new">RTSP Video:</label>
+            <input type="text" id="rtsp-video-new" name="rtsp-video-new" value=""><br>
+        </div>
+
+        <!-- <label for="send-url">Send URL:</label>
+        <input type="text" id="send-url" name="send-url" value="{{ json_data.send_url }}"><br>
+
+        <label for="device-name">Device Name:</label>
+        <input type="text" id="device-name" name="device-name" value="{{ json_data.device_name }}"><br>
+
+        <label for="rtsp-video">RTSP Video:</label>
+        <input type="text" id="rtsp-video" name="rtsp-video" value="{{ json_data.rtsp_video }}"><br> -->
+
+        <button type="submit">Save</button>
+    </form>
+
+    <script>
+// Fetch config status
+        function fetchStatus() {
+            fetch('/status')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    // Update status
+                    var statusContainer = document.getElementById('config-status');
+                    statusContainer.textContent = data.status;
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                });
+        }
+
+
+        // Submit form data asynchronously
+        document.getElementById('json-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+//             var formData = new FormData(this);
+//             var jsonData = {
+//     "send_url": formData.get('send-url'),
+//     "device_name": formData.get('device-name'),
+//     "rtsp_video": formData.get('rtsp-video')
+// };
+
+            var formData = new FormData(this);
+            var jsonData = [];
+
+            // Count the number of objects in the array
+            var numObjects = {{ json_data|length }};
+
+            // Loop through each object in the array
+            for (var i = 0; i < numObjects; i++) {
+                var obj = {
+                    "send_url": formData.get('send-url' + (i + 1)),
+                    "device_name": formData.get('device-name' + (i + 1)),
+                    "rtsp_video": formData.get('rtsp-video' + (i + 1))
+                };
+                jsonData.push(obj);
+            }
+
+            fetch('/json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+// Update status
+                fetchStatus();
+
+                // Display the updated JSON
+                var jsonContainer = document.querySelector('.json-container pre');
+                jsonContainer.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+            });
+        });
+
+// Initial fetch of config status
+        fetchStatus();
+    </script>
+</body>
+</html>

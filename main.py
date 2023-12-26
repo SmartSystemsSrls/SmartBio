@@ -34,13 +34,7 @@ def show_img(img, obj):
 
 loaded_config = {}
 
-while(True):
-  print("Checking for " + str(datetime.now(timezone.utc)))
-  try:
-    config = json.load(open('config.json'))
-    if(loaded_config != config):
-      loaded_config = config
-      print("loaded config:", config)
+def process_config(config):
     rtsp_video = config["rtsp_video"]
     send_url = config["send_url"]
     device_name = config["device_name"]
@@ -62,6 +56,16 @@ while(True):
     except Exception as e2:
       print("could not read video")
       print(e2)
+
+while(True):
+  print("Checking for " + str(datetime.now(timezone.utc)))
+  try:
+    configs = json.load(open('config.json'))
+    if(loaded_config != configs):
+      loaded_config = configs
+      print("loaded config:", configs)
+    for config in configs
+      process_config(config)
   except Exception as e3:
     print("could not load config, it should be a file named config.json with rtsp_video, send_url and device_name")
     print(e3)

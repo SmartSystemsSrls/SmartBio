@@ -7,22 +7,6 @@
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-         table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
 
         h1 {
             text-align: center;
@@ -144,7 +128,7 @@
             <label for="rtsp-video-new">RTSP Video:</label>
             <input type="text" id="rtsp-video-new" name="rtsp-video-new" value=""><br>
 
-            <button type="submit">Add New Configuration</button>
+            <button type="submit">Save New Configuration</button>
         </form>
         <button onclick="toggleSection('view-section')">View Configurations</button>
         <button onclick="toggleSection('edit-section')">Edit Configurations</button>
@@ -152,13 +136,12 @@
 
     <div class="status-container">
         <h2>Config Status:</h2>
-        <pre id="config-status">Loading.</span>
+        <pre id="config-status" class="status">Loading..</pre>
     </div>
 
     <script>
         // Fetch config status
         function fetchStatus() {
-            var statusContainer = document.getElementById('config-status');
             statusContainer.textContent = "Loading...";
             fetch('/status')
                 .then(function(response) {
@@ -166,7 +149,8 @@
                 })
                 .then(function(data) {
                     // Update status
-                    statusContainer.textContent = JSON.stringify(data, null, 2);
+                    var statusContainer = document.getElementById('config-status');
+                    statusContainer.textContent = data.status;
                 })
                 .catch(function(error) {
                     console.error('Error:', error);
@@ -175,9 +159,6 @@
 
         // Function to toggle between sections
         function toggleSection(sectionId) {
-            if (sectionId == 'edit-section') {
-                refreshEditSection();
-            }
             var sections = ['view-section', 'edit-section', 'add-section'];
             sections.forEach(function (id) {
                 var section = document.getElementById(id);
@@ -197,9 +178,7 @@
             var jsonData = [];
 
             // Count the number of objects in the array
-            // var numObjects = {{ json_data|length }};
-            var numObjects = this.querySelectorAll('label').length / 3;
-            // var numObjects = editForm.querySelectorAll('label').length;
+            var numObjects = {{ json_data|length }};
 
             // Loop through each object in the array
             for (var i = 0; i < numObjects; i++) {
@@ -223,13 +202,12 @@
             })
             .then(function(data) {
                 // Update status
-               
-               // refreshEditSection(data)
+                fetchStatus();
+
                 // Display the updated JSON
                 var jsonContainer = document.querySelector('.json-container pre');
                 jsonContainer.textContent = JSON.stringify(data, null, 2);
                 toggleSection('view-section');
-                 fetchStatus();
             })
             .catch(function(error) {
                 console.error('Error:', error);
@@ -243,8 +221,7 @@
                 var jsonData = [];
 
                 // Count the number of objects in the array
-                var numObjects = document.getElementById('edit-form').querySelectorAll('label').length / 3;
-
+                var numObjects = {{ json_data|length }};
 
                 // Loop through each object in the array
                 for (var i = 0; i < numObjects; i++) {
@@ -270,13 +247,12 @@
                 })
                 .then(function(data) {
                     // Update status
-                    
+                    fetchStatus();
 
                     // Display the updated JSON
                     var jsonContainer = document.querySelector('.json-container pre');
                     jsonContainer.textContent = JSON.stringify(data, null, 2);
                     toggleSection('view-section');
-                    fetchStatus();
                 })
                 .catch(function(error) {
                     console.error('Error:', error);
@@ -295,69 +271,34 @@
                 "rtsp_video": formData.get('rtsp-video-new')
             };
 
-            fetch('/add', {
+            // Add the new configuration to the existing JSON
+            var jsonContainer = document.querySelector('.json-container pre');
+            var existingData = JSON.parse(jsonContainer.textContent);
+            existingData.push(newConfig);
+
+            fetch('/json', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(newConfig)
+                body: JSON.stringify(existingData)
             })
             .then(function(response) {
                 return response.json();
             })
             .then(function(data) {
                 // Update status
-                
+                fetchStatus();
 
                 // Display the updated JSON
                 var jsonContainer = document.querySelector('.json-container pre');
                 jsonContainer.textContent = JSON.stringify(data, null, 2);
                 toggleSection('view-section');
-                fetchStatus();
             })
             .catch(function(error) {
                 console.error('Error:', error);
             });
         });
-
-        // Function to refresh the Edit Configurations section
-function refreshEditSection() {
-    var editSection = document.getElementById('edit-section');
-    var editForm = document.getElementById('edit-form');
-    var editSectionHTML = '';
-    fetch('/json')
-                .then(function(response) {
-                    return response.json();
-                })
-                .then(function(data) {
-                    // Update status
-                   data.forEach(function(obj, index) {
-        editSectionHTML += `
-            <div class="object-container">
-                <label for="send-url${index + 1}">Send URL ${index + 1}:</label>
-                <input type="text" id="send-url${index + 1}" name="send-url${index + 1}" value="${obj.send_url}"><br>
-
-                <label for="device-name${index + 1}">Device Name ${index + 1}:</label>
-                <input type="text" id="device-name${index + 1}" name="device-name${index + 1}" value="${obj.device_name}"><br>
-
-                <label for="rtsp-video${index + 1}">RTSP Video ${index + 1}:</label>
-                <input type="text" id="rtsp-video${index + 1}" name="rtsp-video${index + 1}" value="${obj.rtsp_video}"><br>
-
-                <!-- Delete button for each configuration -->
-                <button type="button" onclick="deleteConfig(${index + 1})">Delete</button>
-            </div>
-        `;
-    });
-                   editSectionHTML +=  '<button type="submit">Save Changes</button>';
-
-    editForm.innerHTML = editSectionHTML;
-                })
-                .catch(function(error) {
-                    console.error('Error:', error);
-                });
-    
-    // editSection.classList.remove('hidden');
-}
 
         // Initial fetch of config status
         fetchStatus();
