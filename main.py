@@ -64,7 +64,7 @@ while(True):
     if(loaded_config != configs):
       loaded_config = configs
       print("loaded config:", configs)
-    for config in configs
+    for config in configs:
       process_config(config)
   except Exception as e3:
     print("could not load config, it should be a file named config.json with rtsp_video, send_url and device_name")
