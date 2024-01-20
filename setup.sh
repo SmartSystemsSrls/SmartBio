@@ -6,6 +6,7 @@ sudo apt install python3-pip -y
 sudo apt-get install ffmpeg libsm6 libxext6  -y
 sudo apt-get install python3-venv -y
 sudo apt install python3-wheel -y
+rm -rf env/
 python3 -m venv env
 source env/bin/activate
 pip3 install --upgrade pip
